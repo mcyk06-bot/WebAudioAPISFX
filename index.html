@@ -130,7 +130,6 @@
         if(!isLooping) return;
         const s = getSettings();
         playSFX();
-        // 最長のリリースタイムに合わせて次のトリガーを計算
         const nextTime = Math.max(s.atk + s.dec + s.rel, s.atk2 + s.dec2 + s.rel2) * 1000 + 100;
         loopTimer = setTimeout(startLoop, nextTime);
     }
@@ -198,46 +197,58 @@
         ioArea.value = code;
 
         // クリップボードにコピー
-        if (navigator.clipboard) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            // モダンブラウザ用
             navigator.clipboard.writeText(code).then(() => {
-                showToast("コピーしました！");
+                showToast("✅ コピー完了！");
             }).catch(err => {
-                // 古いブラウザや一部の環境用
-                ioArea.select();
-                document.execCommand('copy');
-                showToast("コピーしました！");
+                // フォールバック
+                fallbackCopy(ioArea, code);
             });
+        } else {
+            // 古いブラウザ用
+            fallbackCopy(ioArea, code);
         }
     }
 
-    // 画面上に一瞬だけメッセージを出す演出（トースト通知）
+    // 古いブラウザ用のコピー処理
+    function fallbackCopy(ioArea, code) {
+        ioArea.select();
+        ioArea.setSelectionRange(0, 99999); // モバイル対応
+        try {
+            document.execCommand('copy');
+            showToast("✅ コピー完了！");
+        } catch(err) {
+            showToast("⚠️ 手動でコピーしてください");
+        }
+    }
+
+    // トースト通知表示
     function showToast(message) {
         const toast = document.createElement('div');
         toast.textContent = message;
-        toast.style.position = 'fixed';
-        toast.style.bottom = '100px';
-        toast.style.left = '50%';
-        toast.style.transform = 'translateX(-50%)';
-        toast.style.background = 'rgba(0, 255, 204, 0.9)';
-        toast.style.color = '#000';
-        toast.style.padding = '10px 20px';
-        toast.style.borderRadius = '20px';
-        toast.style.fontWeight = 'bold';
-        toast.style.zIndex = '1000';
-        toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 4px 20px rgba(255,0,255,0.5);
+            font-size: 0.9rem;
+        `;
         document.body.appendChild(toast);
         
         setTimeout(() => {
+            toast.style.transition = 'opacity 0.5s, transform 0.5s';
             toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.5s';
+            toast.style.transform = 'translateX(-50%) translateY(10px)';
             setTimeout(() => document.body.removeChild(toast), 500);
         }, 1500);
-    }
-
-    function exportCode() {
-        const s = getSettings();
-        document.getElementById('io-area').value = `// SFX_V11_PARAMS: ${JSON.stringify(s)}`;
-        alert("Smart Codeを書き出しました！");
     }
 </script>
 </body>
