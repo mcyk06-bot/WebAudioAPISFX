@@ -3,238 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SFX Mobile V5 - Full Pro</title>
+    <title>SFX Mobile V9 - Smart Export</title>
     <style>
-        :root { --accent: #00ffcc; --bg: #121212; --card: #1e1e1e; --text: #eee; }
+        :root { --accent: #ff00ff; --accent2: #00ffff; --bg: #0f0f0f; --card: #1a1a1a; --text: #eee; }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, sans-serif; 
-            background: var(--bg); color: var(--text); margin: 0; padding: 10px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .container { width: 100%; max-width: 500px; padding-bottom: 120px; }
-        header { width: 100%; padding: 15px 0; text-align: center; color: var(--accent); font-weight: bold; letter-spacing: 2px; }
-        
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 550px; padding-bottom: 140px; }
+        header { width: 100%; padding: 15px 0; text-align: center; color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
         section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #333; }
-        h3 { font-size: 0.75rem; color: #888; margin: 0 0 12px 0; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 8px; }
-
-        .control-group { margin-bottom: 15px; }
-        .label-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem; }
-        .val { color: var(--accent); font-family: monospace; }
-
-        select { width: 100%; padding: 10px; background: #333; color: white; border: none; border-radius: 8px; font-size: 1rem; margin-bottom: 10px; }
-
-        input[type="range"] { width: 100%; height: 30px; background: transparent; appearance: none; }
+        .osc1-box { border-top: 4px solid var(--accent); }
+        .osc2-box { border-top: 4px solid var(--accent2); }
+        h3 { font-size: 0.75rem; color: #888; margin: 0 0 12px 0; text-transform: uppercase; display: flex; justify-content: space-between; }
+        .control-group { margin-bottom: 12px; }
+        .label-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; }
+        .val { font-family: monospace; font-weight: bold; }
+        .v1 { color: var(--accent); } .v2 { color: var(--accent2); }
+        select { width: 100%; padding: 8px; background: #333; color: white; border: none; border-radius: 6px; font-size: 0.9rem; }
+        input[type="range"] { width: 100%; height: 25px; background: transparent; appearance: none; }
         input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
-        input[type="range"]::-webkit-slider-thumb { appearance: none; height: 24px; width: 24px; background: var(--accent); border-radius: 50%; margin-top: -10px; }
-
-        .footer-controls {
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(18,18,18,0.95); padding: 15px;
-            display: flex; gap: 10px; border-top: 1px solid #333; z-index: 100;
-        }
-        button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; }
-        .btn-play { background: var(--accent); color: #000; }
-        .btn-loop { background: #333; color: #888; }
-        .btn-loop.active { background: #ff4400; color: white; }
-        
-        #export-area { width: 100%; height: 100px; background: #000; color: #0f0; border-radius: 8px; padding: 10px; font-size: 0.7rem; margin-top: 10px; border: 1px solid #333; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; height: 22px; width: 22px; border-radius: 50%; margin-top: -9px; }
+        #freq::-webkit-slider-thumb, #slide::-webkit-slider-thumb, #atk::-webkit-slider-thumb, #rel::-webkit-slider-thumb { background: var(--accent); }
+        #freq2::-webkit-slider-thumb, #slide2::-webkit-slider-thumb, #atk2::-webkit-slider-thumb, #rel2::-webkit-slider-thumb { background: var(--accent2); }
+        .mix-panel { background: #222; text-align: center; border: 2px solid #444; }
+        .footer-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10,10,10,0.9); padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; z-index: 100; }
+        button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-play { background: linear-gradient(45deg, var(--accent), var(--accent2)); color: white; font-size: 1.1rem; }
+        .io-area { width: 100%; height: 60px; background: #000; color: #0f0; border-radius: 8px; padding: 8px; font-size: 0.6rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>SFX MACHINE MOBILE V5</header>
+    <header>SFX SMART ENGINE V9</header>
 
-    <section>
-        <h3>Oscillator & Pitch</h3>
-        <select id="type">
-            <option value="sine">Sine</option><option value="square">Square</option>
-            <option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option>
-            <option value="noise">Noise</option>
-        </select>
+    <section class="mix-panel">
+        <h3>Master Balance</h3>
         <div class="control-group">
-            <div class="label-row"><span>Frequency</span><span class="val" id="freq-val"></span></div>
-            <input type="range" id="freq" min="20" max="3000" value="440">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Pitch Slide</span><span class="val" id="slide-val"></span></div>
-            <input type="range" id="slide" min="-1500" max="1500" value="0">
+            <div class="label-row"><span>OSC 1 (Pink)</span><span>MIX</span><span>OSC 2 (Cyan)</span></div>
+            <input type="range" id="mix" min="0" max="1" step="0.01" value="0.5">
+            <div class="label-row"><span class="v1" id="mix-v1">50%</span><span></span><span class="v2" id="mix-v2">50%</span></div>
         </div>
     </section>
 
-    <section>
-        <h3>ADSR Envelope</h3>
-        
-        <div class="control-group">
-            <div class="label-row"><span>Attack</span><span class="val" id="atk-val"></span></div>
-            <input type="range" id="atk" min="0" max="1" step="0.01" value="0.01">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Decay</span><span class="val" id="dec-val"></span></div>
-            <input type="range" id="dec" min="0.01" max="1" step="0.01" value="0.2">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Sustain</span><span class="val" id="sus-val"></span></div>
-            <input type="range" id="sus" min="0" max="1" step="0.01" value="0.3">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Release</span><span class="val" id="rel-val"></span></div>
-            <input type="range" id="rel" min="0.01" max="2" step="0.01" value="0.5">
-        </div>
+    <section class="osc1-box">
+        <h3>OSC 1</h3>
+        <select id="type"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth" selected>Sawtooth</option><option value="triangle">Triangle</option><option value="noise">Noise</option></select>
+        <div class="control-group"><div class="label-row"><span>Freq</span><span class="val v1" id="freq-val"></span></div><input type="range" id="freq" min="20" max="3000" value="440"></div>
+        <div class="control-group"><div class="label-row"><span>Slide</span><span class="val v1" id="slide-val"></span></div><input type="range" id="slide" min="-1500" max="1500" value="0"></div>
+        <div class="control-group"><div class="label-row"><span>Atk</span><span class="val v1" id="atk-val"></span></div><input type="range" id="atk" min="0" max="1" step="0.01" value="0.01"></div>
+        <div class="control-group"><div class="label-row"><span>Rel</span><span class="val v1" id="rel-val"></span></div><input type="range" id="rel" min="0.01" max="2" step="0.01" value="0.5"></div>
+    </section>
+
+    <section class="osc2-box">
+        <h3>OSC 2</h3>
+        <select id="type2"><option value="sine">Sine</option><option value="square">Square</option><option value="sawtooth">Sawtooth</option><option value="triangle" selected>Triangle</option><option value="noise">Noise</option></select>
+        <div class="control-group"><div class="label-row"><span>Freq</span><span class="val v2" id="freq2-val"></span></div><input type="range" id="freq2" min="20" max="3000" value="880"></div>
+        <div class="control-group"><div class="label-row"><span>Slide</span><span class="val v2" id="slide2-val"></span></div><input type="range" id="slide2" min="-1500" max="1500" value="0"></div>
+        <div class="control-group"><div class="label-row"><span>Atk</span><span class="val v2" id="atk2-val"></span></div><input type="range" id="atk2" min="0" max="1" step="0.01" value="0.01"></div>
+        <div class="control-group"><div class="label-row"><span>Rel</span><span class="val v2" id="rel2-val"></span></div><input type="range" id="rel2" min="0.01" max="2" step="0.01" value="0.3"></div>
     </section>
 
     <section>
-        <h3>LFO (Vibrato)</h3>
-        <div class="control-group">
-            <div class="label-row"><span>Rate (Speed)</span><span class="val" id="lfoRate-val"></span></div>
-            <input type="range" id="lfoRate" min="0" max="60" step="0.1" value="0">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Depth</span><span class="val" id="lfoDepth-val"></span></div>
-            <input type="range" id="lfoDepth" min="0" max="1000" value="0">
-        </div>
-    </section>
-
-    <section>
-        <h3>Effects & Space</h3>
-        <div class="control-group">
-            <div class="label-row"><span>Distortion</span><span class="val" id="dist-val"></span></div>
-            <input type="range" id="dist" min="0" max="100" value="0">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Lowpass Filter</span><span class="val" id="filter-val"></span></div>
-            <input type="range" id="filter" min="100" max="15000" value="15000">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Delay Time</span><span class="val" id="delTime-val"></span></div>
-            <input type="range" id="delTime" min="0" max="1" step="0.01" value="0">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Delay Feedback</span><span class="val" id="delFeed-val"></span></div>
-            <input type="range" id="delFeed" min="0" max="0.9" step="0.01" value="0.3">
-        </div>
-        <div class="control-group">
-            <div class="label-row"><span>Reverb</span><span class="val" id="verb-val"></span></div>
-            <input type="range" id="verb" min="0" max="1" step="0.01" value="0">
-        </div>
-    </section>
-
-    <section>
-        <button style="background:#444; color:white; width:100%;" onclick="exportCode()">EXPORT CODE</button>
-        <textarea id="export-area" readonly></textarea>
+        <button style="background:#444; color:white; width:100%;" onclick="exportCode()">EXPORT SMART CODE</button>
+        <textarea id="io-area" class="io-area" readonly></textarea>
     </section>
 </div>
 
 <div class="footer-controls">
-    <button class="btn-loop" id="loopBtn" onclick="toggleLoop()">LOOP: OFF</button>
-    <button class="btn-play" onclick="playSFX()">SHOT</button>
+    <button class="btn-play" onclick="playSFX()">PLAY SFX</button>
 </div>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let isLooping = false, loopTimer = null, currentNodes = null;
 
     function updateDisplay() {
         document.querySelectorAll('input[type="range"]').forEach(input => {
-            document.getElementById(input.id + '-val').textContent = input.value;
+            const valEl = document.getElementById(input.id + '-val');
+            if(valEl) valEl.textContent = input.value;
         });
-        if(currentNodes && isLooping) applyRealtimeParams();
+        const m = document.getElementById('mix').value;
+        document.getElementById('mix-v1').textContent = Math.round((1-m)*100) + "%";
+        document.getElementById('mix-v2').textContent = Math.round(m*100) + "%";
     }
     document.querySelectorAll('input').forEach(el => el.addEventListener('input', updateDisplay));
     updateDisplay();
 
-    function applyRealtimeParams() {
-        const s = getSettings(), now = audioCtx.currentTime;
-        if(currentNodes.osc) currentNodes.osc.frequency.setTargetAtTime(s.freq, now, 0.05);
-        if(currentNodes.filter) currentNodes.filter.frequency.setTargetAtTime(s.filter, now, 0.05);
-    }
-
-    function toggleLoop() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        isLooping = !isLooping;
-        const btn = document.getElementById('loopBtn');
-        btn.classList.toggle('active', isLooping);
-        btn.textContent = isLooping ? "LOOP: ON" : "LOOP: OFF";
-        if(isLooping) startLoop(); else clearTimeout(loopTimer);
-    }
-
-    function startLoop() {
-        if(!isLooping) return;
-        const s = getSettings();
-        playSFX();
-        loopTimer = setTimeout(startLoop, (s.atk + s.dec + s.rel) * 1000 + 50);
+    function setupOsc(type, freq, slide, atk, rel, vol, now) {
+        let node; const g = audioCtx.createGain();
+        if(type === 'noise') {
+            node = audioCtx.createBufferSource();
+            const b = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+            const d = b.getChannelData(0);
+            for (let i = 0; i < b.length; i++) d[i] = Math.random() * 2 - 1;
+            node.buffer = b;
+        } else {
+            node = audioCtx.createOscillator(); node.type = type;
+            node.frequency.setValueAtTime(freq, now);
+            node.frequency.exponentialRampToValueAtTime(Math.max(1, freq + slide), now + atk + rel);
+        }
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(vol, now + atk);
+        g.gain.exponentialRampToValueAtTime(0.001, now + atk + rel);
+        node.connect(g);
+        return { connect:(n)=>g.connect(n), start:(t)=>node.start(t), stop:(t)=>node.stop(t) };
     }
 
     function playSFX() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const s = getSettings(), now = audioCtx.currentTime;
-        const g = audioCtx.createGain(), f = audioCtx.createBiquadFilter(), d = audioCtx.createWaveShaper();
-        f.frequency.setValueAtTime(s.filter, now);
-        d.curve = makeDistortionCurve(s.dist);
-
-        let src;
-        if (s.type === 'noise') {
-            src = audioCtx.createBufferSource();
-            const b = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
-            const data = b.getChannelData(0);
-            for (let i = 0; i < b.length; i++) data[i] = Math.random() * 2 - 1;
-            src.buffer = b;
-        } else {
-            src = audioCtx.createOscillator(); src.type = s.type;
-            src.frequency.setValueAtTime(s.freq, now);
-            src.frequency.exponentialRampToValueAtTime(Math.max(1, s.freq + s.slide), now + s.atk + s.dec + s.rel);
-            if (s.lfoRate > 0) {
-                const l = audioCtx.createOscillator(), lg = audioCtx.createGain();
-                l.frequency.value = s.lfoRate; lg.gain.value = s.lfoDepth;
-                l.connect(lg); lg.connect(src.frequency);
-                l.start(); l.stop(now + 3);
-            }
+        if(s.mix < 1) { // OSC1 
+            const osc1 = setupOsc(s.type, s.freq, s.slide, s.atk, s.rel, (1-s.mix)*0.5, now);
+            osc1.connect(audioCtx.destination); osc1.start(now); osc1.stop(now + s.atk + s.rel + 0.1);
         }
-
-        const dur = s.atk + s.dec + s.rel;
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(0.4, now + s.atk);
-        g.gain.linearRampToValueAtTime(s.sus * 0.4, now + s.atk + s.dec);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-
-        src.connect(d); d.connect(f); f.connect(g); g.connect(audioCtx.destination);
-
-        if (s.delTime > 0) {
-            const dl = audioCtx.createDelay(), df = audioCtx.createGain();
-            dl.delayTime.value = s.delTime; df.gain.value = s.delFeed;
-            g.connect(dl); dl.connect(df); df.connect(dl); dl.connect(audioCtx.destination);
+        if(s.mix > 0) { // OSC2
+            const osc2 = setupOsc(s.type2, s.freq2, s.slide2, s.atk2, s.rel2, s.mix*0.5, now);
+            osc2.connect(audioCtx.destination); osc2.start(now); osc2.stop(now + s.atk2 + s.rel2 + 0.1);
         }
-        if (s.verb > 0) {
-            const v = audioCtx.createConvolver(); v.buffer = createReverbBuffer(s.verb);
-            g.connect(v); v.connect(audioCtx.destination);
-        }
-
-        src.start(); src.stop(now + dur + 1);
-        currentNodes = { osc: (s.type !== 'noise' ? src : null), filter: f };
-    }
-
-    function makeDistortionCurve(amount) {
-        let k = amount, n = 44100, c = new Float32Array(n);
-        for (let i = 0; i < n; ++i ) {
-            let x = i * 2 / n - 1;
-            c[i] = (3 + k) * x * 20 * (Math.PI / 180) / (Math.PI + k * Math.abs(x));
-        }
-        return c;
-    }
-
-    function createReverbBuffer(amount) {
-        const len = audioCtx.sampleRate * 2;
-        const b = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
-        for (let c = 0; c < 2; c++) {
-            const d = b.getChannelData(c);
-            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 10 * amount);
-        }
-        return b;
     }
 
     function getSettings() {
-        const ids = ['type','freq','slide','lfoRate','lfoDepth','atk','dec','sus','rel','dist','filter','delTime','delFeed','verb'];
+        const ids = ['mix','type','freq','slide','atk','rel','type2','freq2','slide2','atk2','rel2'];
         let config = {};
         ids.forEach(id => {
             const el = document.getElementById(id);
@@ -245,29 +133,18 @@
 
     function exportCode() {
         const s = getSettings();
-        document.getElementById('export-area').value = `function playSFX(ctx) {
-    const now = ctx.currentTime;
-    const g = ctx.createGain(), f = ctx.createBiquadFilter();
-    f.frequency.value = ${s.filter};
-    let src;
-    if("${s.type}"==="noise"){
-        src=ctx.createBufferSource(); let b=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
-        let data=b.getChannelData(0); for(let i=0;i<b.length;i++)data[i]=Math.random()*2-1; src.buffer=b;
-    } else {
-        src=ctx.createOscillator(); src.type="${s.type}";
-        src.frequency.setValueAtTime(${s.freq},now);
-        src.frequency.exponentialRampToValueAtTime(${Math.max(1, s.freq + s.slide)}, now + ${s.atk + s.dec + s.rel});
-        ${s.lfoRate > 0 ? `let l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=${s.lfoRate};lg.gain.value=${s.lfoDepth};l.connect(lg);lg.connect(src.frequency);l.start();l.stop(now+3);`:''}
-    }
-    g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(0.4,now+${s.atk});
-    g.gain.linearRampToValueAtTime(${s.sus*0.4},now+${s.atk+s.dec});
-    g.gain.exponentialRampToValueAtTime(0.0001,now+${s.atk + s.dec + s.rel});
-    src.connect(f); f.connect(g); g.connect(ctx.destination);
-    ${s.delTime > 0 ? `let dl=ctx.createDelay(),df=ctx.createGain();dl.delayTime.value=${s.delTime};df.gain.value=${s.delFeed};g.connect(dl);dl.connect(df);df.connect(dl);dl.connect(ctx.destination);`:''}
-    src.start(); src.stop(now + ${s.atk + s.dec + s.rel + 1});
-}`;
+        let code = `// SFX_SMART_PARAMS: ${JSON.stringify(s)}\nfunction playSFX(ctx) {\n    const now = ctx.currentTime;\n`;
+        
+        if (s.mix <= 0) {
+            code += `    // Single OSC 1 Mode\n    const osc = setupOscNode(ctx, "${s.type}", ${s.freq}, ${s.slide}, ${s.atk}, ${s.rel}, 0.5, now);\n    osc.connect(ctx.destination); osc.start(now); osc.stop(now + ${s.atk + s.rel + 0.1});\n`;
+        } else if (s.mix >= 1) {
+            code += `    // Single OSC 2 Mode\n    const osc = setupOscNode(ctx, "${s.type2}", ${s.freq2}, ${s.slide2}, ${s.atk2}, ${s.rel2}, 0.5, now);\n    osc.connect(ctx.destination); osc.start(now); osc.stop(now + ${s.atk2 + s.rel2 + 0.1});\n`;
+        } else {
+            code += `    // Dual OSC Mode\n    const osc1 = setupOscNode(ctx, "${s.type}", ${s.freq}, ${s.slide}, ${s.atk}, ${s.rel}, ${(1-s.mix).toFixed(2)} * 0.5, now);\n    const osc2 = setupOscNode(ctx, "${s.type2}", ${s.freq2}, ${s.slide2}, ${s.atk2}, ${s.rel2}, ${s.mix.toFixed(2)} * 0.5, now);\n    osc1.connect(ctx.destination); osc2.connect(ctx.destination);\n    osc1.start(now); osc2.start(now);\n`;
+        }
+        code += `}`;
+        document.getElementById('io-area').value = code;
     }
 </script>
-
 </body>
 </html>
