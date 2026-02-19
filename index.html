@@ -191,6 +191,51 @@
 
     function exportCode() {
         const s = getSettings();
+        const code = `// SFX_V12_PARAMS: ${JSON.stringify(s)}`;
+        const ioArea = document.getElementById('io-area');
+        
+        // テキストエリアに表示
+        ioArea.value = code;
+
+        // クリップボードにコピー
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("コピーしました！");
+            }).catch(err => {
+                // 古いブラウザや一部の環境用
+                ioArea.select();
+                document.execCommand('copy');
+                showToast("コピーしました！");
+            });
+        }
+    }
+
+    // 画面上に一瞬だけメッセージを出す演出（トースト通知）
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.position = 'fixed';
+        toast.style.bottom = '100px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = 'rgba(0, 255, 204, 0.9)';
+        toast.style.color = '#000';
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '20px';
+        toast.style.fontWeight = 'bold';
+        toast.style.zIndex = '1000';
+        toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => document.body.removeChild(toast), 500);
+        }, 1500);
+    }
+
+    function exportCode() {
+        const s = getSettings();
         document.getElementById('io-area').value = `// SFX_V11_PARAMS: ${JSON.stringify(s)}`;
         alert("Smart Codeを書き出しました！");
     }
