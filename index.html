@@ -35,7 +35,7 @@
         .btn-play { background: linear-gradient(45deg, var(--accent), var(--accent2)); color: white; }
         .btn-loop { background: #333; color: #888; }
         .btn-loop.active { background: #ff4400; color: white; box-shadow: 0 0 15px #ff4400; }
-        .io-area { width: 100%; height: 60px; background: #000; color: #0f0; border-radius: 8px; padding: 8px; font-size: 0.6rem; margin-top: 10px; }
+        .io-area { width: 100%; height: 140px; background: #000; color: #0f0; border-radius: 8px; padding: 10px; font-size: 0.7rem; margin-top: 10px; font-family: 'Courier New', monospace; line-height: 1.5; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -82,7 +82,7 @@
     </section>
 
     <section>
-        <button style="background:#444; color:white; width:100%;" onclick="exportCode()">EXPORT SMART CODE</button>
+        <button style="background:#444; color:white; width:100%;" onclick="exportCode()">📋 EXPORT FUNCTION CODE</button>
         <textarea id="io-area" class="io-area" readonly></textarea>
     </section>
 </div>
@@ -190,40 +190,121 @@
 
     function exportCode() {
         const s = getSettings();
-        const code = `// SFX_V12_PARAMS: ${JSON.stringify(s)}`;
-        const ioArea = document.getElementById('io-area');
         
-        // テキストエリアに表示
+        // シンプルな関数形式で出力
+        const code = `        function playSFX() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = audioCtx.currentTime;
+            const p = ${JSON.stringify(s)};
+            
+            // OSC1
+            if(p.mix < 1) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                
+                osc.type = p.type;
+                osc.frequency.setValueAtTime(p.freq, now);
+                osc.frequency.exponentialRampToValueAtTime(Math.max(1, p.freq + p.slide), now + p.atk + p.rel);
+                
+                filter.frequency.setValueAtTime(p.filter, now);
+                
+                const vol = (1 - p.mix) * 0.5;
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(vol, now + p.atk);
+                gain.gain.linearRampToValueAtTime(p.sus * vol, now + p.atk + p.dec);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + p.atk + p.dec + p.rel);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + p.atk + p.dec + p.rel + 0.1);
+            }
+            
+            // OSC2
+            if(p.mix > 0) {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                const filter2 = audioCtx.createBiquadFilter();
+                
+                osc2.type = p.type2;
+                osc2.frequency.setValueAtTime(p.freq2, now);
+                osc2.frequency.exponentialRampToValueAtTime(Math.max(1, p.freq2 + p.slide2), now + p.atk2 + p.rel2);
+                
+                filter2.frequency.setValueAtTime(p.filter2, now);
+                
+                const vol2 = p.mix * 0.5;
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.linearRampToValueAtTime(vol2, now + p.atk2);
+                gain2.gain.linearRampToValueAtTime(p.sus2 * vol2, now + p.atk2 + p.dec2);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + p.atk2 + p.dec2 + p.rel2);
+                
+                osc2.connect(filter2);
+                filter2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now);
+                osc2.stop(now + p.atk2 + p.dec2 + p.rel2 + 0.1);
+            }
+        }`;
+
+        const ioArea = document.getElementById('io-area');
         ioArea.value = code;
 
-        // クリップボードにコピー
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            // モダンブラウザ用
-            navigator.clipboard.writeText(code).then(() => {
+        // iPhone/iPad対応のコピー処理
+        copyToClipboard(code, ioArea);
+    }
+
+    function copyToClipboard(text, textArea) {
+        // 方法1: モダンなClipboard API (iOS 13.4+)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
                 showToast("✅ コピー完了！");
             }).catch(err => {
                 // フォールバック
-                fallbackCopy(ioArea, code);
+                iosCopyFallback(textArea);
             });
         } else {
-            // 古いブラウザ用
-            fallbackCopy(ioArea, code);
+            // 方法2: iOS向けフォールバック
+            iosCopyFallback(textArea);
         }
     }
 
-    // 古いブラウザ用のコピー処理
-    function fallbackCopy(ioArea, code) {
-        ioArea.select();
-        ioArea.setSelectionRange(0, 99999); // モバイル対応
+    function iosCopyFallback(textArea) {
+        // iOSで確実に動作する方法
+        textArea.focus();
+        textArea.select();
+        
+        // iOSではsetSelectionRangeが必要
         try {
-            document.execCommand('copy');
-            showToast("✅ コピー完了！");
+            const range = document.createRange();
+            range.selectNodeContents(textArea);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textArea.setSelectionRange(0, 999999);
         } catch(err) {
-            showToast("⚠️ 手動でコピーしてください");
+            console.log('Selection error:', err);
         }
+
+        // execCommandでコピー
+        let success = false;
+        try {
+            success = document.execCommand('copy');
+        } catch(err) {
+            console.log('Copy error:', err);
+        }
+
+        if(success) {
+            showToast("✅ コピー完了！");
+        } else {
+            showToast("📋 長押しでコピーしてください");
+        }
+        
+        // 選択を解除
+        window.getSelection().removeAllRanges();
     }
 
-    // トースト通知表示
     function showToast(message) {
         const toast = document.createElement('div');
         toast.textContent = message;
@@ -240,6 +321,7 @@
             z-index: 10000;
             box-shadow: 0 4px 20px rgba(255,0,255,0.5);
             font-size: 0.9rem;
+            pointer-events: none;
         `;
         document.body.appendChild(toast);
         
@@ -247,8 +329,10 @@
             toast.style.transition = 'opacity 0.5s, transform 0.5s';
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(-50%) translateY(10px)';
-            setTimeout(() => document.body.removeChild(toast), 500);
-        }, 1500);
+            setTimeout(() => {
+                if(toast.parentNode) document.body.removeChild(toast);
+            }, 500);
+        }, 2000);
     }
 </script>
 </body>
