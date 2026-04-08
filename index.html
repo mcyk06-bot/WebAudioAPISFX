@@ -30,6 +30,13 @@
         .osc2-box input[type="range"]::-webkit-slider-thumb { background: var(--accent2); }
 
         .mix-panel { background: #222; text-align: center; border: 2px solid #444; position: sticky; top: 0; z-index: 10; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        
+        /* New Preset styles */
+        .preset-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn-preset { background: #444; color: #fff; font-size: 0.7rem; padding: 10px 5px; border-radius: 6px; border: 1px solid #555; cursor: pointer; transition: 0.2s; }
+        .btn-preset:active { background: #666; transform: scale(0.95); }
+        .btn-random { background: linear-gradient(135deg, #ff8800, #ff0055); border: none; }
+
         .footer-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10,10,10,0.95); padding: 15px; display: flex; gap: 10px; border-top: 1px solid #333; z-index: 100; }
         button { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
         .btn-play { background: linear-gradient(45deg, var(--accent), var(--accent2)); color: white; }
@@ -48,6 +55,12 @@
             <div class="label-row"><span class="v1">PINK (OSC1)</span><span>MASTER MIX</span><span class="v2">CYAN (OSC2)</span></div>
             <input type="range" id="mix" min="0" max="1" step="0.01" value="0.5">
             <div class="label-row"><span class="v1" id="mix-v1">50%</span><span></span><span class="v2" id="mix-v2">50%</span></div>
+        </div>
+        
+        <div class="preset-grid">
+            <button class="btn-preset" onclick="setPreset('electric')">ELECTRIC DRONE</button>
+            <button class="btn-preset" onclick="setPreset('road')">ROAD NOISE</button>
+            <button class="btn-preset btn-random" onclick="randomize()">🎲 RANDOM</button>
         </div>
     </section>
 
@@ -166,7 +179,7 @@
                 const l = audioCtx.createOscillator(), lg = audioCtx.createGain();
                 l.frequency.value = lfoR; lg.gain.value = lfoD;
                 l.connect(lg); lg.connect(src.frequency);
-                l.start(); l.stop(now + atk + rel + 0.1);
+                l.start(); l.stop(now + atk + dec + rel + 0.1);
             }
         }
         g.gain.setValueAtTime(0, now);
@@ -188,10 +201,43 @@
         return config;
     }
 
+    function setPreset(mode) {
+        if (mode === 'electric') {
+            updateInputs({
+                mix: 0.5, type: 'square', freq: 50, slide: 0, atk: 0.5, dec: 0.5, sus: 1, rel: 0.5, lfoRate: 10, lfoDepth: 5, dist: 10, filter: 400,
+                type2: 'sine', freq2: 100, slide2: 0, atk2: 0.5, dec2: 0.5, sus2: 1, rel2: 0.5, lfoRate2: 0, lfoDepth2: 0, dist2: 0, filter2: 300
+            });
+        } else if (mode === 'road') {
+            updateInputs({
+                mix: 0.5, type: 'noise', freq: 100, slide: 0, atk: 0.8, dec: 0.1, sus: 1, rel: 0.8, lfoRate: 0, lfoDepth: 0, dist: 0, filter: 150,
+                type2: 'noise', freq2: 200, slide2: 0, atk2: 1.0, dec2: 0.1, sus2: 1, rel2: 1.0, lfoRate2: 0, lfoDepth2: 0, dist2: 5, filter2: 80
+            });
+        }
+        updateDisplay();
+    }
+
+    function randomize() {
+        const waves = ['sine','square','sawtooth','triangle','noise'];
+        const r = (min, max, step = 1) => Math.round((Math.random() * (max - min) + min) / step) * step;
+        const rf = (min, max) => parseFloat((Math.random() * (max - min) + min).toFixed(2));
+
+        updateInputs({
+            mix: rf(0, 1),
+            type: waves[r(0, 4)], freq: r(20, 2000), slide: r(-1000, 1000), atk: rf(0, 0.5), dec: rf(0.1, 1), sus: rf(0, 1), rel: rf(0.1, 1.5), lfoRate: rf(0, 30), lfoDepth: r(0, 500), dist: r(0, 50), filter: r(200, 8000),
+            type2: waves[r(0, 4)], freq2: r(20, 2000), slide2: r(-1000, 1000), atk2: rf(0, 0.5), dec2: rf(0.1, 1), sus2: rf(0, 1), rel2: rf(0.1, 1.5), lfoRate2: rf(0, 30), lfoDepth2: r(0, 500), dist2: r(0, 50), filter2: r(200, 8000)
+        });
+        updateDisplay();
+    }
+
+    function updateInputs(settings) {
+        Object.keys(settings).forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = settings[id];
+        });
+    }
+
     function exportCode() {
         const s = getSettings();
-        
-        // シンプルな関数形式で出力
         const code = `        function playSFX() {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const now = audioCtx.currentTime;
@@ -202,24 +248,17 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 const filter = audioCtx.createBiquadFilter();
-                
                 osc.type = p.type;
                 osc.frequency.setValueAtTime(p.freq, now);
                 osc.frequency.exponentialRampToValueAtTime(Math.max(1, p.freq + p.slide), now + p.atk + p.rel);
-                
                 filter.frequency.setValueAtTime(p.filter, now);
-                
                 const vol = (1 - p.mix) * 0.5;
                 gain.gain.setValueAtTime(0, now);
                 gain.gain.linearRampToValueAtTime(vol, now + p.atk);
                 gain.gain.linearRampToValueAtTime(p.sus * vol, now + p.atk + p.dec);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + p.atk + p.dec + p.rel);
-                
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(now);
-                osc.stop(now + p.atk + p.dec + p.rel + 0.1);
+                osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(now); osc.stop(now + p.atk + p.dec + p.rel + 0.1);
             }
             
             // OSC2
@@ -227,55 +266,39 @@
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
                 const filter2 = audioCtx.createBiquadFilter();
-                
                 osc2.type = p.type2;
                 osc2.frequency.setValueAtTime(p.freq2, now);
                 osc2.frequency.exponentialRampToValueAtTime(Math.max(1, p.freq2 + p.slide2), now + p.atk2 + p.rel2);
-                
                 filter2.frequency.setValueAtTime(p.filter2, now);
-                
                 const vol2 = p.mix * 0.5;
                 gain2.gain.setValueAtTime(0, now);
                 gain2.gain.linearRampToValueAtTime(vol2, now + p.atk2);
                 gain2.gain.linearRampToValueAtTime(p.sus2 * vol2, now + p.atk2 + p.dec2);
                 gain2.gain.exponentialRampToValueAtTime(0.001, now + p.atk2 + p.dec2 + p.rel2);
-                
-                osc2.connect(filter2);
-                filter2.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc2.start(now);
-                osc2.stop(now + p.atk2 + p.dec2 + p.rel2 + 0.1);
+                osc2.connect(filter2); filter2.connect(gain2); gain2.connect(audioCtx.destination);
+                osc2.start(now); osc2.stop(now + p.atk2 + p.dec2 + p.rel2 + 0.1);
             }
         }`;
-
         const ioArea = document.getElementById('io-area');
         ioArea.value = code;
-
-        // iPhone/iPad対応のコピー処理
         copyToClipboard(code, ioArea);
     }
 
     function copyToClipboard(text, textArea) {
-        // 方法1: モダンなClipboard API (iOS 13.4+)
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast("✅ コピー完了！");
             }).catch(err => {
-                // フォールバック
                 iosCopyFallback(textArea);
             });
         } else {
-            // 方法2: iOS向けフォールバック
             iosCopyFallback(textArea);
         }
     }
 
     function iosCopyFallback(textArea) {
-        // iOSで確実に動作する方法
         textArea.focus();
         textArea.select();
-        
-        // iOSではsetSelectionRangeが必要
         try {
             const range = document.createRange();
             range.selectNodeContents(textArea);
@@ -283,55 +306,24 @@
             selection.removeAllRanges();
             selection.addRange(range);
             textArea.setSelectionRange(0, 999999);
-        } catch(err) {
-            console.log('Selection error:', err);
-        }
-
-        // execCommandでコピー
+        } catch(err) {}
         let success = false;
-        try {
-            success = document.execCommand('copy');
-        } catch(err) {
-            console.log('Copy error:', err);
-        }
-
-        if(success) {
-            showToast("✅ コピー完了！");
-        } else {
-            showToast("📋 長押しでコピーしてください");
-        }
-        
-        // 選択を解除
+        try { success = document.execCommand('copy'); } catch(err) {}
+        if(success) showToast("✅ コピー完了！");
+        else showToast("📋 長押しでコピーしてください");
         window.getSelection().removeAllRanges();
     }
 
     function showToast(message) {
         const toast = document.createElement('div');
         toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(45deg, var(--accent), var(--accent2));
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: bold;
-            z-index: 10000;
-            box-shadow: 0 4px 20px rgba(255,0,255,0.5);
-            font-size: 0.9rem;
-            pointer-events: none;
-        `;
+        toast.style.cssText = `position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: linear-gradient(45deg, var(--accent), var(--accent2)); color: #fff; padding: 12px 24px; border-radius: 25px; font-weight: bold; z-index: 10000; box-shadow: 0 4px 20px rgba(255,0,255,0.5); font-size: 0.9rem; pointer-events: none;`;
         document.body.appendChild(toast);
-        
         setTimeout(() => {
             toast.style.transition = 'opacity 0.5s, transform 0.5s';
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(-50%) translateY(10px)';
-            setTimeout(() => {
-                if(toast.parentNode) document.body.removeChild(toast);
-            }, 500);
+            setTimeout(() => { if(toast.parentNode) document.body.removeChild(toast); }, 500);
         }, 2000);
     }
 </script>
